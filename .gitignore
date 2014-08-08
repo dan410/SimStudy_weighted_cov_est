@@ -1,0 +1,6 @@
+*.Rdata
+*.rds
+*.rda
+.Rapp*
+.DS_Store
+
