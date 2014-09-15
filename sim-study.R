@@ -1,14 +1,14 @@
 
-library(sseigfun) #my package for covariance estimation
+library(sseigfun) # my package for covariance estimation
 library(sfdasim) # my package for simulating spatially distributed curves
 library(geoR) # used to simulate gaussian random fields
 library(spatstat) # simulating point processes
+
 ########################################################
 #	create locations
 ########################################################
 
-
-### here is a funciton I creadted to make grid point creation easier
+### here is a funciton I created to make grid point creation easier
 grid_points <- function(n, a = 0, b = 1, adj=FALSE){
 	if(adj){		
 		spc <- (b-a)/(n+1)
@@ -61,12 +61,12 @@ intensity <- c(rep(1, n1), rep(25, n2))
 nsims <- 50
 CURVES <- NULL
 for( i in 1:nsims){
-	CURVES[[i]] <-  sim_sfda_curves(nBasis=3, 
-                            type="Cos", 
+	CURVES[[i]] <-  sim_sfda_curves(nBasis = 3, 
+                            type = "Cos", 
 														basis.pars = 2,
-                            cov.model=rep("exponential",3), 
-                            cov.pars=rbind(c(1,.3), c(1,0.3), c(1,0.3)),
-                            locs=locs)
+                            cov.model = rep("exponential",3), 
+                            cov.pars = rbind(c(1,.3), c(1,0.3), c(1,0.3)),
+                            locs = locs)
 }
 
 
@@ -113,7 +113,6 @@ for( i in 1:nsims){
 	dist.L2[i] <- sum((cov.true.pts - cov.est.pts)^2)
 	
 }
-
 
 wt4 <- dist.L2
 boxplot(equal, ylim = c(0,100))

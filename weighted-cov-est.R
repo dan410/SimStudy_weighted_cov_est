@@ -39,9 +39,10 @@ wireframe(surface ~ grid[,1]*grid[,2], drape=TRUE, pretty=TRUE, 	scales=list(arr
 diag <- mapply(cov.true, x = grid[,1], y=grid[,1])
 plot(grid[,1], diag, type = "l", ylim = c(0, 1.2))
 
-#####################################################################
-#    simulate curves with spatial structure on the coefficients     #
-#####################################################################
+############################################################################
+###  simulate curves with spatial structure on the coefficients 
+############################################################################
+
 mycurves <- sim_sfda_curves(nBasis=3, 
                             type="Cos", 
                             cov.model=rep("exponential",3), 
@@ -53,7 +54,9 @@ mycurves <- sim_sfda_curves(nBasis=3,
                             
 with(mycurves, plot_curves( coef = coef, basis.fns, ylim = c(-2,2)))
 
+############################################################################
 ### generate observed data 
+############################################################################
 m <- 10  # number of observations per curve
 times <- seq(0.05,0.95, length = m)
 dat <- with(mycurves, sim_sfda_data(locs = locs, coef = coef, basis.fns = basis.fns, sigma = 0.01, pts = times))
@@ -88,9 +91,10 @@ lamwt <- mapply(lamfun, x = sim.pp$x, y = sim.pp$y)
 loc.wts <- data.frame(x = sim.pp$x, y = sim.pp$y, int = den[1:n.locs], sqt.int = sqrt(den[1:n.locs]), lambda = lamwt)
 
 
-################################################################################################
-#    simulate curves with spatial structure on the coefficients using the point pattern data   
-###############################################################################################
+############################################################################
+### simulate curves with spatial structure on the coefficients using the point pattern data 
+############################################################################
+
 mycurves <- sim_sfda_curves(nBasis=3, 
                             type="Cos", 
 														basis.pars = 2,
@@ -131,7 +135,6 @@ dist.L2 <- sum((cov.true.pts - cov.est.pts)^2)
 
 eigen.fns <- estimate_eigenfunctions(cov.fit=cov.est)
  
-
 evals <- eigen.fns$values
 
 par(mfrow=c(1,2))
