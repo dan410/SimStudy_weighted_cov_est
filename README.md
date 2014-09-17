@@ -10,6 +10,7 @@ weight_i = f(lambda_i)
 ```
 where the function `f()` we consider is a power function: `f(x) = x^p`. For example, when `p = 1/2` the weight for `curve_i` is equal to the square root of the point intensity at `location_i`.
 
+Note: this approach is about relative weighting. Locations on a regular grid (i.e. constant point intensity) will receive equal weighting. This approach will only be beneficial under situation of non-constant point intensity. 
  
 File Organization
 --------------------
@@ -22,6 +23,7 @@ This folder contains all of the R scripts for running the simulation study.
 |------|------------|
 |sim-study.R | Main file for running the simulation study |
 | weighted-cov-est.R | this is script that looks at the different covariance structures |
+| create_grid.R | Create point location configurations for simulation study |
 
 ### Data
 
@@ -29,4 +31,5 @@ This folder contains all the R data objects used in the project
 
 | file | Description |
 |------|-------------|
-| wtsims.RData | contains output from simulations | 
+| `wtsims.RData` | contains output from simulations | 
+| `sim_locs.rds` | data frame of location configurations with associated intensity values for each location  |
