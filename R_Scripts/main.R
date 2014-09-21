@@ -7,20 +7,14 @@ library(datadr) # map-reduce package
 ### ON PIC ### setwd("~/Dissertation_projects/SimStudy_weighted_cov_est/")
 ### Local ### setwd("/Users/fort002/Google Drive/Research/Projects/SimStudy_weighted_cov_est")
 
-# source R functions
-path = "R"
-for (nm in list.files(path, pattern = "[.][Rr]$")) {
-       source(file.path(path, nm))
-}
 
-# read in set of location configurations to use 
-sim_locs <- readRDS("Data/sim_locs.rds")
+res <- ddf(localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/simRes_kv"), update = TRUE)
 
-### using datadr 
-nsim = 6
-sim_specs <- data.frame(dep = rep(0.2, nsim), grid_ID = rep(3, nsim), weight = rep(1:6, each=nsim/6))
-sim_specs$sim_ID <- 1:nrow(sim_specs)
+res <- ddf(localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/simRes_kv"), update = TRUE)
 
-# create a k/v pair for each row 
-bySimID <- divide(sim_specs, by = c("sim_ID"), update = TRUE)
+res_df <- res[[1]][[2]]
+
+ggplot(res_df, aes(x = factor(weight), y = L2)) + geom_boxplot() + ylim(c(0,0.1))
+
+saveRDS(res_df, "Data/sim_res_.rds")
 

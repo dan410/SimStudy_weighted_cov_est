@@ -1,7 +1,9 @@
 library(datadr) # map-reduce package
 
-### ON PIC ### setwd("~/Dissertation_projects/SimStudy_weighted_cov_est/")
-### Local ### setwd("/Users/fort002/Google Drive/Research/Projects/SimStudy_weighted_cov_est")
+### ON PIC ### 
+setwd("~/Dissertation_projects/SimStudy_weighted_cov_est/")
+### Local ### 
+# setwd("/Users/fort002/Google Drive/Research/Projects/SimStudy_weighted_cov_est")
 
 
 ############################################################################
@@ -102,19 +104,21 @@ sim_reduce <- expression(
 )
 
 ############################################################################
-### Execute Map-Reduce
+### Read in data needed in map-reduce
 ############################################################################
 
 
 ## read in object with different configuration of spatial locations
 sim_locs <- readRDS("Data/sim_locs.rds")
 
-## Create a ddf object with values equal to simulatin parameters
-bySimID <- ddf(localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/sim_kv"), update = TRUE)
 
-# create a multicore cluster
-library(parallel)
-cl <- makeCluster(2)
+############################################################################
+### Execute on PIC
+############################################################################
+
+#### grid 3, dep 0.1
+## Create a ddf object with values equal to simulatin parameters
+bySimID <- ddf(localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_kv_grid3_dep1"), update = TRUE)
 
 # execute the job
 timing <- system.time(
@@ -123,20 +127,64 @@ sim_result <- mrExec(bySimID,
 										setup = sim_setup, 
 										map = sim_map, 
 										reduce = sim_reduce,
-										control = localDiskControl(cluster = cl),
-										output = localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/simRes_kv", autoYes= TRUE), 
+										output = localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_res_grid3_dep1", autoYes= TRUE), 
 										overwrite = TRUE)
 )
 timing
 
-## scratch
-res <- ddf(localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/simRes_kv"), update = TRUE)
+#### grid 3, dep 0.3
+## Create a ddf object with values equal to simulatin parameters
+bySimID <- ddf(localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_kv_grid3_dep3"), update = TRUE)
 
-res_df <- ldply(res, function(x){x[[2]]})
+# execute the job
+timing <- system.time(
+sim_result <- mrExec(bySimID, 
+										params = list(sim_locs = sim_locs),
+										setup = sim_setup, 
+										map = sim_map, 
+										reduce = sim_reduce,
+										output = localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_res_grid3_dep3", autoYes= TRUE), 
+										overwrite = TRUE)
+)
+timing
 
-ggplot(res_df, aes(x = factor(weight), y = L2, color = factor(weight))) + geom_boxplot() 
+#### grid 3, independent
+## Create a ddf object with values equal to simulatin parameters
+bySimID <- ddf(localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_kv_grid3_ind"), update = TRUE)
 
-saveRDS(res_df, "Data/sim_res_7573421.rds")
-res_df$obs_per_curve <- 20
+# execute the job
+timing <- system.time(
+sim_result <- mrExec(bySimID, 
+										params = list(sim_locs = sim_locs),
+										setup = sim_setup, 
+										map = sim_map, 
+										reduce = sim_reduce,
+										output = localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_res_grid3_ind", autoYes= TRUE), 
+										overwrite = TRUE)
+)
+timing
+
+############################################################################
+### Execute Local
+############################################################################
 
 
+# ## Create a ddf object with values equal to simulatin parameters
+# bySimID <- ddf(localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/sim_kv"), update = TRUE)
+#
+# # create a multicore cluster
+# library(parallel)
+# cl <- makeCluster(4)
+#
+# # execute the job
+# timing <- system.time(
+# sim_result <- mrExec(bySimID,
+# 										params = list(sim_locs = sim_locs),
+# 										setup = sim_setup,
+# 										map = sim_map,
+# 										reduce = sim_reduce,
+# 										control = localDiskControl(cluster = cl),
+# 										output = localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/simRes_kv", autoYes= TRUE),
+# 										overwrite = TRUE)
+# )
+# timing
