@@ -8,7 +8,7 @@ We propose a weighting scheme that is derived from the spatial point intensity (
 ```
 weight_i = f(lambda_i)
 ```
-where the function `f()` we consider is a power function: `f(x) = x^p`. For example, when `p = 1/2` the weight for `curve_i` is equal to the square root of the point intensity at `location_i`.
+where the function `f()` we consider is a power function: `f(x) = (1/x)^p`. For example, when `p = 1/2` the weight for `curve_i` is equal to the square root of the inverse point intensity at `location_i`.
 
 Note: this approach is about relative weighting. Locations on a regular grid (i.e. constant point intensity) will receive equal weighting. This approach will only be beneficial under situation of non-constant point intensity. 
  

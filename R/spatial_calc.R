@@ -13,7 +13,7 @@ spatial_calc <- function(dep, grid_ID, weight, sim_locs){
                             locs = locs)
 
 	### generate observed data 
-	m <- 20  # number of observations per curve
+	m <- 10  # number of observations per curve
 	times <- runif(m, min = 0.01, max = 0.99)
 	dat <- with(curves, sim_sfda_data(locs = locs, coef = coef, basis.fns = basis.fns, sigma = 0.01, pts = times))
   
