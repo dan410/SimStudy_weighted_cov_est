@@ -164,6 +164,24 @@ sim_result <- mrExec(bySimID,
 )
 timing
 
+#### grid 3, all
+## Create a ddf object with values equal to simulatin parameters
+bySimID <- ddf(localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_kv_grid3_all"), update = TRUE)
+
+# execute the job
+timing <- system.time(
+sim_result <- mrExec(bySimID, 
+										params = list(sim_locs = sim_locs),
+										setup = sim_setup, 
+										map = sim_map, 
+										reduce = sim_reduce,
+										output = localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_res_grid3_all", autoYes= TRUE), 
+										overwrite = TRUE)
+)
+timing
+
+
+
 ############################################################################
 ### Execute Local
 ############################################################################

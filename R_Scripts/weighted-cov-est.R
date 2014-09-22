@@ -16,7 +16,7 @@ cov.f <- function(x,...){
 curve(cov.f(x, cov.model="exponential", cov.pars=c(1,.3)), from=0, to=1, main="exponential")
 curve(cov.f(x, cov.model="exponential", cov.pars=c(1,.2)), from=0, to=1, add=TRUE, col="blue")
 curve(cov.f(x, cov.model="exponential", cov.pars=c(1,.1)), from=0, to=1, add=TRUE, col="red")
-curve(cov.f(x, cov.model="exponential", cov.pars=c(1,.05)), from=0, to=1, add=TRUE, col="gray")
+curve(cov.f(x, cov.model="exponential", cov.pars=c(1,.001)), from=0, to=1, add=TRUE, col="gray")
 ###### Gaussian covariance functions #####################
 curve(cov.f(x, cov.model="gaussian", cov.pars=c(1,.3)), from=0, to=1, main="gaussian")
 curve(cov.f(x, cov.model="gaussian", cov.pars=c(1,.2)), from=0, to=1, add=TRUE, col="blue")
