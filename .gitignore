@@ -11,3 +11,10 @@
 
 # R data files from past sessions
 #.Rdata
+
+# ignore graphic files
+*.pdf
+*.png
+*.jpg
+*.jpeg
+
