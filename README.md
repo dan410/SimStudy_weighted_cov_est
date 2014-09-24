@@ -21,9 +21,16 @@ This folder contains all of the R scripts for running the simulation study.
 
 | file | Description|
 |------|------------|
-|sim-study.R | Main file for running the simulation study |
-| weighted-cov-est.R | this is script that looks at the different covariance structures |
-| create_grid.R | Create point location configurations for simulation study |
+| `create_sim_args.R` |  create data frame of arguments to be used in simulation. Each set of unique arguments is saved as a k/v pair so that the individual calculations in the sim study can be fully parallelized  |
+| `mr_run_sim.R` | map-reduce code for running the simulations. Uses datadr package with k/v inputs equal to simulation function arguments |
+| `create_grid.R` | Create point location configurations for simulation study |
+| `munge.R` | read in data and combine to create data frames for analysis and plotting |
+| `weighted-cov-est.R` | This is a non-essential script that looks at the different covariance structures |
+
+
+### Plots
+Plots are generated with the script `Plots/weighted_cov_est_plots.R` and saved in the `Plots` folder.
+
 
 ### Data
 
@@ -33,3 +40,6 @@ This folder contains all the R data objects used in the project
 |------|-------------|
 | `wtsims.RData` | contains output from simulations | 
 | `sim_locs.rds` | data frame of location configurations with associated intensity values for each location  |
+
+### TO DO
+* update intensity values in the `creat_grid.R` script
