@@ -66,7 +66,7 @@ gp
 
 ### Read in and rbind sim results
 data_files <- list.files("Data", pattern = "sim_res_Sep*")
-data_files <- data_files[1:6]
+data_files <- data_files[10]
 
 all_dat <- NULL
 for(i in seq_along(data_files)){
@@ -77,7 +77,8 @@ for(i in seq_along(data_files)){
 sum(duplicated(all_dat$L2))
 
 
-res_means <- ddply(all_dat, .(dep, weight), summarize, tmean = mean(L2, trim = 0.2), se = sd(L2)/length(L2), n = length(L2) )
+res_means <- ddply(all_dat, .(dep, weight), summarize, tmean = mean(L2, trim = 0.1), se = sd(L2)/length(L2), n = length(L2) )
+res_means <- subset(res_means, weight != 4)
 res_ind <- subset(res_means, dep == 0.001)
 
 # Define the top and bottom of the errorbars
