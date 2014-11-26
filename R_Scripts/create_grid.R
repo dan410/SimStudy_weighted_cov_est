@@ -2,6 +2,11 @@
 #	create location configuration for simulation study
 ########################################################
 
+### ON PIC ### 
+setwd("~/Dissertation_projects/SimStudy_weighted_cov_est/")
+### Local ### 
+# setwd("/Users/fort002/Google Drive/Research/Projects/SimStudy_weighted_cov_est")
+
 source("R/est_intensity.R")
 
 ### here is a funciton I created to make grid point creation easier
@@ -29,6 +34,21 @@ names(locs) <- c("locx", "locy")
 intensity <- est_intensity(locs, radius = 0.05)
 df1 <- data.frame(x = locs[,1], y = locs[,2], intensity = intensity$intensity)
 df1$grid <- 1
+
+
+### grid 3
+pts1 <- grid_points(4)
+pts1 <- subset(pts1, Var1 > 0.2 | Var2 > 0.2)
+pts2 <- grid_points(4, a=0, b=0.2)
+n1 <- nrow(pts1)
+n2 <- nrow(pts2)
+locs <- rbind(pts1, pts2)
+names(locs) <- c("locx", "locy")
+#intensity <- c(rep(1, n1), rep(4, n2))
+intensity <- est_intensity(locs, radius = 0.15)
+df3 <- data.frame(x = locs[,1], y = locs[,2], intensity = intensity$intensity)
+df3$grid <- 3
+# ggplot(df3, aes(x=x, y=y, size = intensity))+geom_point()
 
 
 

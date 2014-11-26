@@ -11,7 +11,7 @@ library(plyr)
 
 res <- ddf(localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/simRes_kv"), update = TRUE)
 
-res <- ddf(localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_res_grid3_all"), update = TRUE)
+res <- ddf(localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_res_grid2_all"), update = TRUE)
 
 res_df <- res[[1]][[2]]
 head(res_df)
@@ -35,6 +35,8 @@ for(i in seq_along(data_files)){
 
 # test for duplicates
 sum(duplicated(all_dat$L2))
+
+all_dat <- readRDS(file.choose())
 
 
 res_means <- ddply(all_dat, .(dep, weight), summarize, tmean = mean(L2, trim = 0.2) )

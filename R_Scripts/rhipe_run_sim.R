@@ -1,4 +1,7 @@
 library(datadr) # map-reduce package
+library(Rhipe)
+rhinit()
+
 
 ### ON PIC ### 
 setwd("~/Dissertation_projects/SimStudy_weighted_cov_est/")
@@ -12,9 +15,11 @@ setwd("~/Dissertation_projects/SimStudy_weighted_cov_est/")
 
 sim_setup <- expression({
 	
-	library(sseigfun) # my package for covariance estimation
-	library(sfdasim) # my package for simulating spatially distributed curves
-	library(geoR) # used to simulate gaussian random fields
+	.libPaths("/people/fort002/R/x86_64-unknown-linux-gnu-library/3.0")
+	
+	suppressMessages(library(sseigfun)) # my package for covariance estimation
+	suppressMessages(library(sfdasim)) # my package for simulating spatially distributed curves
+	suppressMessages(library(geoR)) # used to simulate gaussian random fields
 	
 	### True covariance function for the process
 	cov.true <- function(x,y){
@@ -81,7 +86,7 @@ sim_map <- expression({
    for(i in 1:length(map.values)){
 		 x <- map.values[[i]]
 		 res <- spatial_calc(dep = x$dep, grid_ID = x$grid, weight = x$weight, obs_per_curve = x$obs_per_curve, sim_locs = sim_locs) 
-		 collect("result", res)
+		 rhcollect("result", res)
 	 }
 })
 
@@ -99,7 +104,7 @@ sim_reduce <- expression(
 			count <- count + 1
    }, post = {
 		 res <- do.call(rbind, res_list)
-     collect(reduce.key, res)
+     rhcollect(reduce.key, res)
    }
 )
 
@@ -116,61 +121,23 @@ sim_locs <- readRDS("Data/sim_locs.rds")
 ### Execute on PIC
 ############################################################################
 
+### NOTE: I HAVE NOT GOTTEN THIS TO WORK ON HDFS USING RHIPE
 
 #### grid 1, all
-## Create a ddf object with values equal to simulatin parameters
-bySimID <- ddf(localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_kv_grid1_all"), update = TRUE)
 
-# execute the job
-timing <- system.time(
-sim_result <- mrExec(bySimID, 
-										params = list(sim_locs = sim_locs),
-										setup = sim_setup, 
-										map = sim_map, 
-										reduce = sim_reduce,
-										output = localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_res_grid1_all", autoYes= TRUE), 
-										overwrite = TRUE)
-)
-timing
+# set map-reduce settings #
+# mapred.reduce.tasks is number of 'chunks'
+mapred.settings = list(mapred.task.timeout="360000000", mapred.map.tasks=1000, mapred.reduce.tasks=400, 
+						mapred.min.split.size=536870912/8)
 
-#### grid 2, all (agriculture grid)
-## Create a ddf object with values equal to simulatin parameters
-bySimID <- ddf(localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_kv_grid2_all"), update = TRUE)
-
-# execute the job
-timing <- system.time(
-sim_result <- mrExec(bySimID, 
-										params = list(sim_locs = sim_locs),
-										setup = sim_setup, 
-										map = sim_map, 
-										reduce = sim_reduce,
-										output = localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_kv/sim_res_grid2_all", autoYes= TRUE), 
-										overwrite = TRUE)
-)
-timing
+out <- rhwatch(map = sim_map,  
+               mapred = mapred.settings, 
+               setup = sim_setup,
+               reduce = sim_reduce,
+               parameters = list( sim_locs = sim_locs),
+               input = rhfmt("/user/fort002/Weighted_cov/sim_kv", type = "map"), 
+               output = rhfmt("/user/fort002/Weighted_cov/sim_kv_result", type="map"), 
+               readback = FALSE, 
+               mon.sec = 5)
 
 
-############################################################################
-### Execute Local
-############################################################################
-
-
-# ## Create a ddf object with values equal to simulatin parameters
-# bySimID <- ddf(localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/sim_kv"), update = TRUE)
-#
-# # create a multicore cluster
-# library(parallel)
-# cl <- makeCluster(4)
-#
-# # execute the job
-# timing <- system.time(
-# sim_result <- mrExec(bySimID,
-# 										params = list(sim_locs = sim_locs),
-# 										setup = sim_setup,
-# 										map = sim_map,
-# 										reduce = sim_reduce,
-# 										control = localDiskControl(cluster = cl),
-# 										output = localDiskConn("~/Documents/Projects/Dissertation_kv/Weighted_cov_kv/simRes_kv", autoYes= TRUE),
-# 										overwrite = TRUE)
-# )
-# timing

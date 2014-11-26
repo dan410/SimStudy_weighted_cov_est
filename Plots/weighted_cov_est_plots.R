@@ -12,14 +12,15 @@ setwd("/Users/fort002/Google Drive/Research/Projects/SimStudy_weighted_cov_est")
 
 locs <- readRDS("Data/sim_locs.rds")
 
-grid3 <- subset(locs, grid == 3)
+grid <- subset(locs, grid == 1)
 
-gp <- ggplot(grid3, aes(x=x, y=y)) + 
+gp <- ggplot(grid, aes(x=x, y=y)) + 
 geom_point() + 
+theme_bw()+
 labs(x = "", y = "")
 gp
 
-ggsave("Plots/grid3.pdf", height = 4, width = 5)
+# ggsave("Plots/grid.pdf", height = 4, width = 5)
 
 library(geoR) # used to simulate gaussian random fields
 library(spatstat) # simulating point processes
@@ -52,47 +53,66 @@ exp_r1 <- cov.f(x, cov.model="exponential", cov.pars=c(1,.1))
 exp_r1_df <- data.frame(x = x, y = exp_r1, range = 0.1)
 
 cov_df <- rbind(exp_r1_df, exp_r2_df, exp_r3_df)
+cov_df$range <- factor(cov_df$range)
 
-gp <- ggplot(cov_df, aes(x = x, y = y, group = range)) + 
-	geom_line(aes(color = factor(range)))+
-	labs(x = "", y = "correlation", color = "range\nparameter")
+gp <- ggplot(cov_df, aes(x = x, y = y, group=range, linetype = range, color = range)) + 
+	geom_line()+
+	theme_bw()+
+  scale_color_manual(values = c("cornflowerblue", "darkolivegreen3", "firebrick1"))+
+	labs(x = "", y = "correlation")+
+	guides(color = guide_legend('range'), linetype = guide_legend('range'))
 gp
 
-# ggsave("exp_corr_funs.pdf", height = 4, width = 5)
+# ggsave("Plots/exp_corr_funs.pdf", width = 8, height = 5)
 
 ############################################################################
 ### 
 ############################################################################
 
 ### Read in and rbind sim results
-data_files <- list.files("Data", pattern = "sim_res_Sep*")
-data_files <- data_files[10]
+all_dat <- readRDS("Data/sim_res_grid.rds")
+all_dat <- readRDS("Data/sim_res_india.rds")
 
-all_dat <- NULL
-for(i in seq_along(data_files)){
-	all_dat <- rbind(all_dat, readRDS(file.path("Data", data_files[i])))
-}
+### plot histograms of the distributions
+gp <- ggplot(all_dat, aes(x = L2)) + 
+geom_histogram()+
+facet_wrap(dep~weight)+
+xlim(c(0, 0.1))
+gp
 
-# test for duplicates
-sum(duplicated(all_dat$L2))
-
-
-res_means <- ddply(all_dat, .(dep, weight), summarize, tmean = mean(L2, trim = 0.1), se = sd(L2)/length(L2), n = length(L2) )
+res_means <- ddply(subset(all_dat, L2 < 0.55), .(dep, weight), summarize, tmean = mean(L2), se = sd(L2)/50, n = 100 )
 res_means <- subset(res_means, weight != 4)
 res_ind <- subset(res_means, dep == 0.001)
+res_means$dep <- factor(res_means$dep, levels = c(0.100, 0.200, 0.300, 0.001), labels=c( "0.1", "0.2", "0.3", "ind"))
 
 # Define the top and bottom of the errorbars
-limits <- aes(ymax = tmean + se, ymin = tmean - se)
+limits <- aes(ymax = tmean + 2*se, ymin = tmean - 2*se)
 
-gp <- ggplot(subset(res_means, dep != 0.001), aes(x = weight, y = tmean, group = dep))+
-geom_line(aes(color = dep), size = 1.5) + geom_errorbar(limits, width=0.1) +
-geom_line(data = res_ind, aes(x = weight, y = tmean), linetype = "dashed", size = 2)+
-geom_point(aes( size = n), color = "orange")+
-scale_size(range = c(2,4))+
-labs(x="weight parameter, p", y = "mean integrated squared error", color = "spatial\ndependence\n(range)", size = "sample size")
+gp <- ggplot(res_means, aes(x = weight, y = tmean, group = dep, color=dep, linetype = dep))+
+geom_line() + geom_errorbar(limits, width=0.05, linetype = 1, color = "black") +
+scale_color_manual(values = c( "cornflowerblue", "darkolivegreen3", "firebrick1", "black"))+
+xlim(c(-0.05,1.05))+
+theme_bw()+
+labs(x="weight parameter, p", y = "mean integrated squared error", color = "spatial\ndependence\n(range)", linetype = "spatial\ndependence\n(range)")
 gp
 
 ggsave("Plots/MSE_trends.pdf", width = 8, height = 5)
+
+res_med <- ddply(all_dat, .(dep, weight), summarize, med = median(L2), se = sd(L2)/length(L2), q1 = quantile(L2, probs = 0.4), q3 = quantile(L2, probs = 0.6), n = length(L2) )
+res_med <- subset(res_med, weight != 4)
+res_ind <- subset(res_med, dep == 0.001)
+
+# Define the top and bottom of the errorbars
+limits <- aes(ymax = med + q3, ymin = med - q1)
+
+gp <- ggplot(subset(res_med, dep != 0.001), aes(x = weight, y = med, group = dep))+
+geom_line(aes(color = dep), size = 1.5) + geom_errorbar(limits, width=0.1) +
+geom_line(data = res_ind, aes(x = weight, y = med), linetype = "dashed", size = 2)+
+
+#geom_point(aes( size = n), color = "orange")+
+scale_size(range = c(2,4))+
+labs(x="weight parameter, p", y = "mean integrated squared error", color = "spatial\ndependence\n(range)", size = "sample size")
+gp
 
 
 ggplot(subset(all_dat, dep != 0.4 & L2 < 0.1), aes(x = factor(weight), y = L2)) + 

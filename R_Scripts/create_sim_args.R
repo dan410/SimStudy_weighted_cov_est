@@ -1,4 +1,9 @@
 library(datadr)
+library(Rhipe)
+rhinit()
+rhoptions(runner = "/share/apps/R/3.0.2/bin/R CMD /share/apps/R/3.0.2/lib64/R/library/Rhipe/bin/RhipeMapReduce --slave --silent --vanilla") #R/3.0.2/
+hdfs.setwd("/user/fort002")
+
 
 ############################################################################
 ### 
@@ -31,6 +36,22 @@ sim_disk_conn <- localDiskConn("~/Dissertation_projects/Map_files/Weighted_cov_k
 															autoYes = TRUE)
 
 addData(sim_disk_conn, bySimID, overwrite = TRUE)
+
+### HDFS connection
+bySimID <- divide(sim_specs, by = c("sim_ID"), 
+	output = hdfsConn("/user/fort002/Weighted_cov/sim_kv", autoYes = TRUE, reset = TRUE), 
+	update = TRUE)
+	
+### HDFS connection
+bySimID <- divide(sim_specs, by = rrDiv(100), 
+	output = hdfsConn("/user/fort002/Weighted_cov/sim_kv", autoYes = TRUE, reset = TRUE), 
+	update = TRUE)
+
+sim_hdfs_conn <- hdfsConn("/user/fort002/Weighted_cov/sim_kv", autoYes = TRUE)
+addData(sim_hdfs_conn, bySimID, overwrite = TRUE)
+
+## using Rhipe
+rhwrite(as.list(bySimID), file = "/user/fort002/Weighted_cov/sim_kv", type = "map")
 
 ############################################################################
 ### Agriculture locations
