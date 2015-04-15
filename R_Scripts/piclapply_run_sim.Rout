@@ -1,0 +1,136 @@
+
+R version 2.15.1 (2012-06-22) -- "Roasted Marshmallows"
+Copyright (C) 2012 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> setwd('~/Dissertation_projects/SimStudy_weighted_cov_est')
+> 
+> ##### MLE using piclapply #####
+> require(picRutils)
+Loading required package: picRutils
+Loading required package: PICRhipe
+Loading required package: pnlStat
+
+Welcome to the pnlStat package, version 2014.03.12.
+
+Commented source code can be found in
+/pic/projects/rhadoop/local/R/R-2.15.1/lib64/R/library/pnlStat/SourceCode.
+
+Loading required package: parallel
+
+Attaching package: ‘picRutils’
+
+The following object(s) are masked from ‘package:pnlStat’:
+
+    killSlurm, piclapply
+
+> 
+> obj.fun <- function(dat, weight){
++   
++   # assign weights to each point based on the intensity values
++   for( j in 1:length(unique(dat$ID))){
++     dat$wt[dat$ID == j] <- (1/intensity[j])^(weight)
++   }
++   
++   ########################################################
++   # estimate the covariance function using weights
++   ########################################################
++   
++   # if estimation fails with an error return NA
++   result = tryCatch({
++     cov.est <- estimate_cov_function(dat, n.marginal.knots = 5)
++   }, warning = function(w) {
++   }, error = function(e) {
++     return(NA)
++   }, finally = {
++   })
++   ### estimate the L2 distance between estimated cov fun and true cov fun
++   tt <- seq(0,1, length =  20)
++   grid <- expand.grid(t1 = tt, t2 = tt)
++   cov.true.pts <- mapply(cov.true, x = grid[,1], y=grid[,2])
++   cov.est.pts <- mapply(sseigfun:::cov.fn, x = grid[,1], y=grid[,2], MoreArgs = list(knots=cov.est$knots, fit.obj=cov.est))
++   dist.L2 <- sum((cov.true.pts - cov.est.pts)^2)/nrow(grid)
++   
++   res <- data.frame(L2 = dist.L2)
++   return(res)
++ }
+> 
+> ### true covariance function
+> cov.true <- function(x,y){
++   alpha = 2
++   k <- 1:3
++   res <- sum(k^(-2*alpha)*cos(k*pi*x)*cos(k*pi*y))
++ }
+> 
+> 
+> ### Select Grid ###
+> grid_ID <- 2
+> 
+> ## read in object with different configuration of spatial locations
+> sim_locs <- readRDS("Data/sim_locs.rds")
+> intensity <- subset(sim_locs, grid == grid_ID)$intensity
+> 
+> DAT <- readRDS(paste("Data/GRID", grid_ID, ".rds", sep = ""))
+> 
+> # This will be a slow computation in serial, but we can do it quickly with
+> # piclapply. We will request 2 nodes to do our job (64 CPUs). Of course,
+> # when you do it, use your own account and your own PNNL e-mail address.
+> 
+> weight <- 0.8
+> 
+> 
+> L2 <- piclapply(DAT,
++                 obj.fun,
++                 weight = weight,
++                 account = 'spyglass',
++                 needed.objects = c('obj.fun', 'cov.true', 'intensity'),
++                 packages = "sseigfun",
++                 numNodes = 2,
++                 partition = 'short',
++                 time.limit.mins = 60,
++                 jobName = 'CovEstgrid2wt1',
++                 email.notification = 'daniel.fortin@pnnl.gov',
++                 verbose = TRUE)
+
+Created working directories and filenames:
+
+wkdir = /pic/scratch/fort002/CovEstgrid2wt1_tmp_2089 
+wkdir.logs = /pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/logs 
+wkdir.out = /pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/out 
+envir.file = /pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/Renvironment.Rdata 
+rscript.file = /pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/pic_lapply.R 
+sl.out = /pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/slurmLaunch.out 
+sl.err = /pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/slurmLaunch.err 
+sb.err = /pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/sbatch.err 
+tarball.file = /people/fort002/Dissertation_projects/SimStudy_weighted_cov_est/CovEstgrid2wt1_output_2089.tar.gz 
+
+R environment for each R instance saved to '/pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/Renvironment.Rdata'
+
+R script file '/pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/pic_lapply.R' written
+
+MPI code 'launch.c' written and compiled
+
+Submitted batch job 7950474. Launching 64 instances of R.
+You can check the status of the SLURM job by typing 'squeue -u fort002' at the system prompt.
+Waiting for SLURM job to complete...
+
+Work on SLURM job began between 0 and 30 seconds after launching
+SLURM job 7950474 not in the queue
+Error in piclapply(DAT, obj.fun, weight = weight, account = "spyglass",  : 
+  R errors detected in '/pic/scratch/fort002/CovEstgrid2wt1_tmp_2089/logs/*.Rout'
+Execution halted

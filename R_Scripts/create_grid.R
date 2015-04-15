@@ -30,46 +30,24 @@ n1 <- nrow(pts1)
 n2 <- nrow(pts2)
 locs <- rbind(pts1, pts2)
 names(locs) <- c("locx", "locy")
-#intensity <- c(rep(1, n1), rep(4, n2))
 intensity <- est_intensity(locs, radius = 0.05)
 df1 <- data.frame(x = locs[,1], y = locs[,2], intensity = intensity$intensity)
 df1$grid <- 1
 
 
-### grid 3
-pts1 <- grid_points(4)
+### grid 2
+pts1 <- grid_points(6)
 pts1 <- subset(pts1, Var1 > 0.2 | Var2 > 0.2)
-pts2 <- grid_points(4, a=0, b=0.2)
+pts2 <- grid_points(6, a=0, b=0.1)
 n1 <- nrow(pts1)
 n2 <- nrow(pts2)
 locs <- rbind(pts1, pts2)
 names(locs) <- c("locx", "locy")
 #intensity <- c(rep(1, n1), rep(4, n2))
-intensity <- est_intensity(locs, radius = 0.15)
-df3 <- data.frame(x = locs[,1], y = locs[,2], intensity = intensity$intensity)
-df3$grid <- 3
-# ggplot(df3, aes(x=x, y=y, size = intensity))+geom_point()
+intensity <- est_intensity(locs, radius = 0.05)
+df2 <- data.frame(x = locs[,1], y = locs[,2], intensity = intensity$intensity)
+df2$grid <- 3
+ggplot(df2, aes(x=x, y=y, size = intensity)) + geom_point()
 
-
-
-#############################################################################
-#### create grid based on homogeneous agriculture locations in souther india
-#############################################################################
-
-### read in agriculture locs and scale to unit square
-locs <- readRDS("Data/ag_locs.rds")[,c("locx", "locy")]/50
-
-## estimate intensity
-locs <- est_intensity(locs, radius = 0.05)
-
-df2 <- data.frame(x = locs$locx, y  = locs$locy, intensity = locs$intensity)
-df2$grid <- 2
-
-sim_locs <- rbind(df1, df2)
-# saveRDS(sim_locs, "Data/sim_locs.rds")
-
-ggplot(sim_locs, aes(x = x, y = y, size = 1/intensity))+
-geom_point()+
-facet_wrap(~grid)
 
 
