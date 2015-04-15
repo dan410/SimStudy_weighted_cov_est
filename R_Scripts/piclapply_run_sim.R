@@ -1,72 +1,71 @@
-# create data lists
+setwd('~/Dissertation_projects/SimStudy_weighted_cov_est')
 
-library(sfdasim) # my package for simulating spatially distributed curves
+##### MLE using piclapply #####
+require(picRutils)
 
+obj.fun <- function(dat, weight){
+  
+  # assign weights to each point based on the intensity values
+  for( j in 1:length(unique(dat$ID))){
+    dat$wt[dat$ID == j] <- (1/intensity[j])^(weight)
+  }
+  
+  ########################################################
+  # estimate the covariance function using weights
+  ########################################################
+  
+  # if estimation fails with an error return NA
+  result = tryCatch({
+    cov.est <- estimate_cov_function(dat, n.marginal.knots = 5)
+  }, warning = function(w) {
+  }, error = function(e) {
+    return(NA)
+  }, finally = {
+  })
+  ### estimate the L2 distance between estimated cov fun and true cov fun
+  tt <- seq(0,1, length =  20)
+  grid <- expand.grid(t1 = tt, t2 = tt)
+  cov.true.pts <- mapply(cov.true, x = grid[,1], y=grid[,2])
+  cov.est.pts <- mapply(sseigfun:::cov.fn, x = grid[,1], y=grid[,2], MoreArgs = list(knots=cov.est$knots, fit.obj=cov.est))
+  dist.L2 <- sum((cov.true.pts - cov.est.pts)^2)/nrow(grid)
+  
+  res <- data.frame(L2 = dist.L2)
+  return(res)
+}
 
-### True covariance function for the process
+### true covariance function
 cov.true <- function(x,y){
   alpha = 2
   k <- 1:3
   res <- sum(k^(-2*alpha)*cos(k*pi*x)*cos(k*pi*y))
 }
 
-### 
-dep <- 0.3
-grid_ID <-1
-obs_per_curve <- 20
+## read in object with different configuration of spatial locations
 sim_locs <- readRDS("Data/sim_locs.rds")
-sigma <- 0.01
+intensity <- subset(sim_locs, grid == 1)$intensity
 
-  
-DAT <- list()
+DAT <- readRDS("Data/GRID1.rds")
 
-for(i in 1:100){ 
-  locs <- subset(sim_locs, grid == grid_ID)[, c("x","y")]
-  intensity <- subset(sim_locs, grid == grid_ID)$intensity
-  
-  curves <- sim_sfda_curves(nBasis = 3, 
-                            type = "Cos", 
-                            basis.pars = 2,
-                            cov.model = rep("exponential", 3), 
-                            cov.pars = rbind(c(1, dep), c(1, dep), c(1, dep)),
-                            locs = locs)
-  
-  ### generate observed data 
-  m <- obs_per_curve  # number of observations per curve
-  times <- runif(m, min = 0.01, max = 0.99)
-  dat <- with(curves, sim_sfda_data(locs = locs, coef = coef, basis.fns = basis.fns, sigma = sigma, pts = times))
-  
-  DAT[[i]] <- dat
-}
+# This will be a slow computation in serial, but we can do it quickly with
+# piclapply. We will request 2 nodes to do our job (64 CPUs). Of course,
+# when you do it, use your own account and your own PNNL e-mail address.
 
-saveRDS(DAT, file = "Data/dat_sig_0.01_dep_0.3.rds")
-
-# assign weights to each point based on the intensity values
-for( j in 1:length(unique(dat$ID))){
-  dat$wt[dat$ID == j] <- (1/intensity[j])^(weight)
-}
-
-########################################################
-# estimate the covariance function using weights
-########################################################
-
-# if estimation fails with an error return NA
-result = tryCatch({
-  cov.est <- estimate_cov_function(dat, n.marginal.knots = 5)
-}, warning = function(w) {
-}, error = function(e) {
-  return(data.frame(dep = dep, grid_ID = grid_ID, weight = weight, L2 = NA))
-}, finally = {
-})
-
-### estimate the L2 distance between estimated cov fun and true cov fun
-tt <- seq(0,1, length =  20)
-grid <- expand.grid(t1 = tt, t2 = tt)
-cov.true.pts <- mapply(cov.true, x = grid[,1], y=grid[,2])
-cov.est.pts <- mapply(sseigfun:::cov.fn, x = grid[,1], y=grid[,2], MoreArgs = list(knots=cov.est$knots, fit.obj=cov.est))
-dist.L2 <- sum((cov.true.pts - cov.est.pts)^2)/nrow(grid)
-
-res <- data.frame(dep = dep, grid_ID = grid_ID, weight = weight, obs_per_curve = obs_per_curve, L2 = dist.L2)
-return(res)
+weight <- 0.3
 
 
+L2 <- piclapply(DAT,
+                obj.fun,
+                weight = weight,
+                account = 'spyglass',
+                needed.objects = c('obj.fun', 'cov.true', 'intensity'),
+                packages = "sseigfun",
+                numNodes = 2,
+                partition = 'short',
+                time.limit.mins = 60,
+                jobName = 'CovEst',
+                email.notification = 'daniel.fortin@pnnl.gov',
+                verbose = TRUE)
+
+
+
+save(L2, file = paste("piclapply_Res/grid1_wt_", weight, ".RData", sep=""))

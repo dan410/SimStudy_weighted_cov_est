@@ -43,3 +43,6 @@ This folder contains all the R data objects used in the project
 
 ### TO DO
 * update intensity values in the `creat_grid.R` script
+
+* Re-do any simulations using picLapply on Olympus, then create plots using the 'Plots/weighted_cov_est_plots.R' script and add to dissertation.
+
