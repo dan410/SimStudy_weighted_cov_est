@@ -2,7 +2,7 @@ library(ggplot2)
 library(plyr)
 
 # set working directory
-setwd("/Users/fort002/Google Drive/Research/Projects/SimStudy_weighted_cov_est")
+# setwd("/Users/fort002/Google Drive/Research/Projects/SimStudy_weighted_cov_est")
 ### ON PIC ### setwd("~/Dissertation_projects/SimStudy_weighted_cov_est/")
 
 ############################################################################
@@ -11,7 +11,7 @@ setwd("/Users/fort002/Google Drive/Research/Projects/SimStudy_weighted_cov_est")
 
 locs <- readRDS("Data/sim_locs.rds")
 
-grid <- subset(locs, grid == 1)
+grid <- subset(locs, grid == 3)
 
 gp <- ggplot(grid, aes(x=x, y=y)) + 
 geom_point() + 
@@ -20,6 +20,14 @@ labs(x = "", y = "")
 gp
 
 # ggsave("Plots/grid.pdf", height = 4, width = 5)
+locs$grid <- factor(locs$grid, levels = c('3', '1', '2'), labels = c('low clustering', 'moderate clustering', 'strong clustering'))
+
+ggplot(locs, aes(x = x, y = y)) + 
+  geom_point() + 
+  facet_wrap(~grid) +
+  theme_bw()+
+  labs(x = "", y = "") 
+# ggsave("Plots/grids.pdf", height = 5, width = 12)
 
 library(geoR) # used to simulate gaussian random fields
 library(spatstat) # simulating point processes
@@ -73,16 +81,32 @@ gp
 ############################################################################
 
 
-grid <- readRDS('Data/grid2_res.rds')
+grid_id <- 1
+grid1 <- readRDS(paste('Data/grid', grid_id, '_res.rds', sep = ''))
+grid1$grid <- grid_id
+grid_id <- 2
+grid2 <- readRDS(paste('Data/grid', grid_id, '_res.rds', sep = ''))
+grid2$grid <- grid_id
+grid_id <- 3
+grid3 <- readRDS(paste('Data/grid', grid_id, '_res.rds', sep = ''))
+grid3$grid <- grid_id
 
+grid <- rbind(grid1, grid2, grid3)
 
-L2_stats <- ddply(grid, .(range, weight), summarize, mean = mean(L2), med = median(L2), se = sd(L2)/sqrt(200))
+grid$grid <- factor(grid$grid, levels = c('3', '1', '2'), labels = c('low clustering', 'moderate clustering', 'strong clustering'))
+
+L2_stats <- ddply(grid, .(grid, range, weight), summarize, mean = mean(L2), med = median(L2), se = sd(L2)/sqrt(200))
 
 ggplot(L2_stats, aes(x = weight, y = mean, group = as.factor(range), color = as.factor(range))) +
-geom_line() + 
-geom_errorbar(aes(ymax = mean + se, ymin = mean - se), width = 0.01)+
-labs(x = 'p', y = "L", color = "range")
+  geom_line() + 
+  geom_errorbar(aes(ymax = mean + se, ymin = mean - se), width = 0.01)+
+  facet_wrap(~grid)+
+  theme_bw()+
+labs(x = 'weight parameter, p', y = "L", color = "Spatial\nDependence\n(range)")
 
+ggsave(file.path('Plots', 'MSE_trends_all.pdf'), width = 12, height = 5)
+
+### plot all three grid results one plot
 
 
 # ### Read in and rbind sim results
